@@ -100,37 +100,33 @@ namespace ClinicApi.Controllers
 
 
         [HttpPost("confirm")]
-        public async Task<IActionResult> ConfirmEmail([FromBody] string token)
+        public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmationTokenDto req)
         {
-            var user = await _dbContext.Users.SingleOrDefaultAsync(u => u.ConfirmationToken == token);
+            var user = _dbContext.Users.Where(u => u.ConfirmationToken == req.ConfirmationToken).FirstOrDefault();
+
+            if (user == null) return Ok(false);
 
             var nowDate = DateTime.Now;
 
             int result = DateTime.Compare(nowDate, user.EmailConfirmationTokenExpiration);
 
-            if (result >= 0) return Ok(false);
-
-
-            if (user == null)
-            {
-                return Ok(false);
-            }
+            if (result >= 0) return Ok("ბმულის მოქედების ვადა ამოიწურა");
 
             user.IsConfirmed = true;
             user.ConfirmationToken = string.Empty;
 
             await _dbContext.SaveChangesAsync();
 
-            var res = new { token = _tokenService.GenerateToken(user), role = user.Role };
+            var res = new { token = _tokenService.GenerateToken(user), role = user.Role, name = user.Name, surname = user.Surname };
 
             return Ok(res);
         }
 
 
         [HttpPut("update-confirm-send")]
-        public async Task<IActionResult> UpdateConfirm([FromBody] string req)
+        public async Task<IActionResult> UpdateConfirm([FromBody] UpdateConfrimDto req)
         {
-            var user = _dbContext.Users.Where(x => x.Email == req).FirstOrDefault();
+            var user = _dbContext.Users.Where(x => x.Email == req.Email).FirstOrDefault();
 
             if (user == null) return Ok(false);
 
@@ -138,8 +134,7 @@ namespace ClinicApi.Controllers
 
             user.EmailConfirmationTokenExpiration = DateTime.Now.AddMinutes(5);
 
-
-            var confirmationTokenn = _dbContext.Users.Where(x => x.Email == req).FirstOrDefault().ConfirmationToken;
+            var confirmationTokenn = _dbContext.Users.Where(x => x.Email == req.Email).FirstOrDefault().ConfirmationToken;
 
             await SendConfirmationEmail(user, confirmationTokenn);
 
@@ -187,7 +182,7 @@ namespace ClinicApi.Controllers
             if (user.Password != req.Password) return Ok(false);
 
 
-            var res = new { token = _tokenService.GenerateToken(user), role = user.Role };
+            var res = new { token = _tokenService.GenerateToken(user), role = user.Role, name = user.Name, surname = user.Surname };
 
             return Ok(res);
         }
@@ -212,7 +207,7 @@ namespace ClinicApi.Controllers
         {
             var emailMessage = new MimeMessage();
 
-            emailMessage.From.Add(new MailboxAddress("Info", "example@gmail.com"));
+            emailMessage.From.Add(new MailboxAddress("Info", "sandrikaa97@gmail.com"));
             emailMessage.To.Add(new MailboxAddress(user.Name, user.Email));
             emailMessage.Subject = "Confirm";
 
@@ -228,7 +223,7 @@ namespace ClinicApi.Controllers
             using (var smtpClient = new SmtpClient())
             {
                 smtpClient.Connect("smtp.gmail.com", 587, useSsl: false);
-                smtpClient.Authenticate("example@gmail.com", "password");
+                smtpClient.Authenticate("sandrikaa97@gmail.com", "etfcagahytotpbxa\n");
                 await smtpClient.SendAsync(emailMessage);
                 smtpClient.Disconnect(true);
             }
