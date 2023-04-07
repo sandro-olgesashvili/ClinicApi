@@ -20,7 +20,9 @@ namespace ClinicApi.Models
 
         public bool IsConfirmed { get; set; }
 
-        public string ConfirmationToken { get; set; }
+        public string? ConfirmationToken { get; set; } = null;
+
+        public string? ConfirmationTokenEmail { get; set; } = null;
 
         public string Role { get; set; } = "user";
 
@@ -34,6 +36,10 @@ namespace ClinicApi.Models
         //public string ImageSrc { get; set; }
 
         public DateTime EmailConfirmationTokenExpiration { get; set; }
+
+        public int? CategoryId { get; set; } = null;
+
+        public Category Category { get; set; }
 
     }
 }

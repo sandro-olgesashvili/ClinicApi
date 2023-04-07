@@ -12,6 +12,19 @@ namespace ClinicApi.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "Categories",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CategoryName = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Categories", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Users",
                 columns: table => new
                 {
@@ -23,14 +36,26 @@ namespace ClinicApi.Migrations
                     Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Password = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     IsConfirmed = table.Column<bool>(type: "bit", nullable: false),
-                    ConfirmationToken = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ConfirmationToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ConfirmationTokenEmail = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Role = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    EmailConfirmationTokenExpiration = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    EmailConfirmationTokenExpiration = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    CategoryId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Users", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Users_Categories_CategoryId",
+                        column: x => x.CategoryId,
+                        principalTable: "Categories",
+                        principalColumn: "Id");
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_CategoryId",
+                table: "Users",
+                column: "CategoryId");
         }
 
         /// <inheritdoc />
@@ -38,6 +63,9 @@ namespace ClinicApi.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Users");
+
+            migrationBuilder.DropTable(
+                name: "Categories");
         }
     }
 }

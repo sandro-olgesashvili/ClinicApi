@@ -16,6 +16,10 @@ namespace ClinicApi.Dto
 
 		public string Password { get; set; }
 
+        public string? Role { get; set; } = "user";
+
+        public int? CategoryId { get; set; } = null;
+
         //[Column(TypeName = "nvarchar(100)")]
         //public string ImageName { get; set; }
 
