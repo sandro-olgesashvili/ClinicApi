@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Text.Json.Serialization;
+
 namespace ClinicApi.Models
 {
 	public class Category
@@ -7,6 +9,7 @@ namespace ClinicApi.Models
 
         public string CategoryName { get; set; }
 
+        [JsonIgnore]
         public List<User> Users { get; set; }
     }
 }

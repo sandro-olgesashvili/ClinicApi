@@ -43,6 +43,8 @@ namespace ClinicApi.Controllers
         {
             var userCheck = _dbContext.Users.Where(x => x.Email == req.Email).FirstOrDefault();
 
+            var category = _dbContext.Categories.Where(x => x.CategoryName == req.Category).FirstOrDefault();
+
             if (userCheck != null) return Ok(false);
 
             var user = new User
@@ -54,7 +56,7 @@ namespace ClinicApi.Controllers
                 Password = req.Password,
                 Role = req.Role,
                 IsConfirmed = true,
-                CategoryId = req.CategoryId,
+                CategoryId = category?.Id,
                 ConfirmationToken = null,
                 EmailConfirmationTokenExpiration = DateTime.Now,
                 //ImageName = req.ImageName,
