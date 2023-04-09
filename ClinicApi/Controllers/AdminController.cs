@@ -164,9 +164,48 @@ namespace ClinicApi.Controllers
 
             await _dbContext.SaveChangesAsync();
 
+            var resCategory = _dbContext.Categories.Where(x => x.CategoryName == req.CategoryName).FirstOrDefault(); 
+
+            return Ok(resCategory);
+        }
+
+
+        [HttpDelete("removeCategory"), Authorize(Roles = "admin")]
+        public async Task<IActionResult> removeCategory([FromQuery] CategoryDto req)
+        {
+            var category = _dbContext.Categories.Where(x => x.CategoryName == req.CategoryName).FirstOrDefault();
+
+            if (category == null) return Ok(false);
+
+            var user = _dbContext.Users.Where(x => x.CategoryId == category.Id).FirstOrDefault();
+
+            if (user != null) return Ok(false);
+
+
+            _dbContext.Categories.Remove(category);
+
+            await _dbContext.SaveChangesAsync();
+
             return Ok(true);
         }
- 
+
+
+        [HttpPut("updateCategory"), Authorize(Roles = "admin")]
+        public async Task<IActionResult> updateCategory([FromBody] Category req)
+        {
+            var category = _dbContext.Categories.Where(x => x.Id == req.Id).FirstOrDefault();
+
+            var category2 = _dbContext.Categories.Where(x => x.CategoryName == req.CategoryName).FirstOrDefault();
+
+            if (category == null) return Ok(false);
+            if (category2 != null) return Ok(false);
+
+            category.CategoryName = req.CategoryName;
+
+            await _dbContext.SaveChangesAsync();
+
+            return Ok(category);
+        }
 
 
 
