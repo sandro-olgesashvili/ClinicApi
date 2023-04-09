@@ -189,6 +189,67 @@ namespace ClinicApi.Controllers
 
 
 
+        [HttpGet("doctor")]
+        public async Task<IActionResult> getDoctor()
+        {
+
+            var doctor = await _dbContext.Users.Where(x => x.Role == "doctor").GroupJoin(
+                    _dbContext.Categories,
+                    u => u.Id,
+                    c => c.Id,
+                    (u, c) => new { User = u, Category = c  }
+                    ).SelectMany(
+                    x => x.Category.DefaultIfEmpty(),
+                    (x, c) => new DoctorDto
+                    {
+                        Id = x.User.Id,
+                        Name = x.User.Name,
+                        Surname = x.User.Surname,
+                        Email = x.User.Email,
+                        IdNumber = x.User.IdNumber,
+                        CategoryName = x.User.Category.CategoryName
+                    }
+                 ).ToListAsync();
+
+            return Ok(doctor);
+        }
+
+
+        [HttpGet("doctorCategory")]
+        public async Task<IActionResult> getDoctorCategory()
+        {
+            var doctor = await _dbContext.Users.Where(x => x.Role == "doctor").GroupJoin(
+                    _dbContext.Categories,
+                    u => u.Id,
+                    c => c.Id,
+                    (u, c) => new { User = u, Category = c }
+                    ).SelectMany(
+                    x => x.Category.DefaultIfEmpty(),
+                    (x, c) => new DoctorDto
+                    {
+                        Id = x.User.Id,
+                        Name = x.User.Name,
+                        Surname = x.User.Surname,
+                        Email = x.User.Email,
+                        IdNumber = x.User.IdNumber,
+                        CategoryName = x.User.Category.CategoryName
+                    }
+                 ).ToListAsync();
+
+
+
+            var doctorByCategory = doctor.GroupBy(c => c.CategoryName);
+
+            var byCategory = doctorByCategory.Select(x => new {
+                CategoryName = x.Key,
+                Total = x.Sum(x => 1)
+            });
+
+            return Ok(byCategory);
+        }
+
+
+
 
         private string GenerateConfirmationToken()
         {

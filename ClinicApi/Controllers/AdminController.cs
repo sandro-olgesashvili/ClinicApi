@@ -181,7 +181,6 @@ namespace ClinicApi.Controllers
 
             if (user != null) return Ok(false);
 
-
             _dbContext.Categories.Remove(category);
 
             await _dbContext.SaveChangesAsync();
