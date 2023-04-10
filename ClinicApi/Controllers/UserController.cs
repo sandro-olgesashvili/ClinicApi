@@ -207,7 +207,9 @@ namespace ClinicApi.Controllers
                         Surname = x.User.Surname,
                         Email = x.User.Email,
                         IdNumber = x.User.IdNumber,
-                        CategoryName = x.User.Category.CategoryName
+                        CategoryName = x.User.Category.CategoryName,
+                        Role = x.User.Role
+
                     }
                  ).ToListAsync();
 
@@ -232,7 +234,9 @@ namespace ClinicApi.Controllers
                         Surname = x.User.Surname,
                         Email = x.User.Email,
                         IdNumber = x.User.IdNumber,
-                        CategoryName = x.User.Category.CategoryName
+                        CategoryName = x.User.Category.CategoryName,
+                        Role = x.User.Role
+
                     }
                  ).ToListAsync();
 
@@ -246,6 +250,33 @@ namespace ClinicApi.Controllers
             });
 
             return Ok(byCategory);
+        }
+
+
+        [HttpGet("getDoctorProfile")]
+        public async Task<IActionResult> getDoctorProfile([FromQuery] GetDoctorProfileDto req)
+        {
+            var doctor = await _dbContext.Users.Where(x => x.Id == req.Id).GroupJoin(
+                    _dbContext.Categories,
+                    u => u.Id,
+                    c => c.Id,
+                    (u, c) => new { User = u, Category = c }
+                    ).SelectMany(
+                    x => x.Category.DefaultIfEmpty(),
+                    (x, c) => new DoctorDto
+                    {
+                        Id = x.User.Id,
+                        Name = x.User.Name,
+                        Surname = x.User.Surname,
+                        Email = x.User.Email,
+                        IdNumber = x.User.IdNumber,
+                        CategoryName = x.User.Category.CategoryName,
+                        Role = x.User.Role
+                    }
+                 ).FirstOrDefaultAsync();
+
+
+            return Ok(doctor);
         }
 
 

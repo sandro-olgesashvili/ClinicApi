@@ -14,6 +14,8 @@ namespace ClinicApi.Dto
 		public string IdNumber { get; set; }
 
 		public string CategoryName { get; set; }
+
+		public string Role { get; set; }
 	}
 }
 
