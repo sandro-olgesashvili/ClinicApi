@@ -93,6 +93,10 @@ namespace ClinicApi.Controllers
         {
             var check = _dbContext.Users.Where(x => x.Id == req.Id).FirstOrDefault();
 
+            var checkEmail = _dbContext.Users.Where(x => x.Email == req.Email).FirstOrDefault();
+
+            if (checkEmail != null) return Ok(false);
+
             if (check == null) return Ok(false);
 
             check.ConfirmationToken = GenerateConfirmationToken();
@@ -131,7 +135,7 @@ namespace ClinicApi.Controllers
             if (user.ConfirmationToken != req.ConfirmationToken || user.ConfirmationTokenEmail != req.ConfirmationTokenEmail)
                 return Ok(false);
 
-            user.ConfirmationToken = string.Empty;
+            user.ConfirmationToken = null;
             user.ConfirmationTokenEmail = null;
 
             user.Email = req.Email;
@@ -206,6 +210,47 @@ namespace ClinicApi.Controllers
             return Ok(category);
         }
 
+
+
+        [HttpGet("GetAllUsers"), Authorize(Roles ="admin")]
+        public async Task<IActionResult> getAllUsers()
+        {
+            var getAllUsers = await _dbContext.Users.GroupJoin(
+                    _dbContext.Categories,
+                    u => u.Id,
+                    c => c.Id,
+                    (u, c) => new { User = u, Category = c }
+                    ).SelectMany(
+                    x => x.Category.DefaultIfEmpty(),
+                    (x, c) => new DoctorDto
+                    {
+                        Id = x.User.Id,
+                        Name = x.User.Name,
+                        Surname = x.User.Surname,
+                        Email = x.User.Email,
+                        IdNumber = x.User.IdNumber,
+                        CategoryName = x.User.Category.CategoryName,
+                        Role = x.User.Role
+
+                    }
+                 ).ToListAsync();
+
+            return Ok(getAllUsers);
+        }
+
+        [HttpDelete("deleteUser"), Authorize(Roles = "admin")]
+        public async Task<IActionResult> deleteUser([FromQuery] GetDoctorProfileDto req)
+        {
+            var user = _dbContext.Users.Where(x => x.Id == req.Id).FirstOrDefault();
+
+            if (user == null) return Ok(false);
+
+            _dbContext.Remove(user);
+
+            await _dbContext.SaveChangesAsync();
+
+            return Ok(true);
+        }
 
 
         private string GenerateConfirmationToken()

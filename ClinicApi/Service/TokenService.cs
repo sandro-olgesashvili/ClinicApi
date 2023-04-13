@@ -21,7 +21,7 @@ namespace ClinicApi.Service
         {
             List<Claim> claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, req.Name),
+                new Claim(ClaimTypes.Email, req.Email),
                 new Claim(ClaimTypes.Role, req.Role),
             };
 
