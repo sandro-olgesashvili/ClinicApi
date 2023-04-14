@@ -5,6 +5,7 @@ using System.Security.Cryptography;
 using System.Threading.Tasks;
 using ClinicApi.Data;
 using ClinicApi.Dto;
+using ClinicApi.Interfaces;
 using ClinicApi.Models;
 using MailKit.Net.Smtp;
 using Microsoft.AspNetCore.Authorization;
@@ -20,9 +21,13 @@ namespace ClinicApi.Controllers
     {
         private readonly DataContext _dbContext;
 
-        public AdminController(DataContext dbContext)
+        private readonly IUserService _userService;
+
+        public AdminController(DataContext dbContext, IUserService userService)
         {
             _dbContext = dbContext;
+
+            _userService = userService;
 
         }
 
@@ -215,7 +220,9 @@ namespace ClinicApi.Controllers
         [HttpGet("GetAllUsers"), Authorize(Roles ="admin")]
         public async Task<IActionResult> getAllUsers()
         {
-            var getAllUsers = await _dbContext.Users.GroupJoin(
+            var username = _userService.GetMyName();
+
+            var getAllUsers = await _dbContext.Users.Where(x => x.Email != username).GroupJoin(
                     _dbContext.Categories,
                     u => u.Id,
                     c => c.Id,

@@ -9,9 +9,11 @@ using ClinicApi.Dto;
 using ClinicApi.Interfaces;
 using ClinicApi.Models;
 using MailKit.Net.Smtp;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MimeKit;
+using Org.BouncyCastle.Ocsp;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -197,7 +199,7 @@ namespace ClinicApi.Controllers
                     _dbContext.Categories,
                     u => u.Id,
                     c => c.Id,
-                    (u, c) => new { User = u, Category = c  }
+                    (u, c) => new { User = u, Category = c }
                     ).SelectMany(
                     x => x.Category.DefaultIfEmpty(),
                     (x, c) => new DoctorDto
@@ -279,6 +281,107 @@ namespace ClinicApi.Controllers
             return Ok(doctor);
         }
 
+
+        [HttpGet("getMyProfile"), Authorize]
+        public async Task<IActionResult> getMyProfile()
+        {
+            var username = _userService.GetMyName();
+
+
+            var user = await _dbContext.Users.Where(x => x.Email == username).GroupJoin(
+                   _dbContext.Categories,
+                   u => u.Id,
+                   c => c.Id,
+                   (u, c) => new { User = u, Category = c }
+                   ).SelectMany(
+                   x => x.Category.DefaultIfEmpty(),
+                   (x, c) => new DoctorDto
+                   {
+                       Id = x.User.Id,
+                       Name = x.User.Name,
+                       Surname = x.User.Surname,
+                       Email = x.User.Email,
+                       IdNumber = x.User.IdNumber,
+                       CategoryName = x.User.Category.CategoryName,
+                       Role = x.User.Role
+                   }
+                   ).FirstOrDefaultAsync();
+
+            return Ok(user);
+        }
+
+
+        [HttpPut("passwordChange"), Authorize]
+        public async Task<IActionResult> passwordChange([FromQuery] UpdatePasswordDoctorDto req)
+        {
+            var user = _dbContext.Users.Where(x => x.Id == req.Id).FirstOrDefault();
+
+            if (user == null) return Ok(false);
+
+            user.Password = req.Password;
+
+            await _dbContext.SaveChangesAsync();
+
+            return Ok(true);
+        }
+
+
+        [HttpPut("updateDoctorEmailSend"), Authorize]
+        public async Task<IActionResult> updateDoctorEmailSend([FromBody] UpdateDoctorEmailDto req)
+        {
+            var check = _dbContext.Users.Where(x => x.Id == req.Id).FirstOrDefault();
+
+            var checkEmail = _dbContext.Users.Where(x => x.Email == req.Email).FirstOrDefault();
+
+            if (checkEmail != null) return Ok(false);
+
+            if (check == null) return Ok(false);
+
+            check.ConfirmationToken = GenerateConfirmationToken();
+
+            check.ConfirmationTokenEmail = GenerateConfirmationToken();
+
+            await _dbContext.SaveChangesAsync();
+
+            var confirm = _dbContext.Users.Where(x => x.Id == req.Id).FirstOrDefault().ConfirmationToken;
+
+            var confirmNew = _dbContext.Users.Where(x => x.Id == req.Id).FirstOrDefault().ConfirmationTokenEmail;
+
+            var firstEmail = new User {Id =check.Id , Email = check.Email, Name = check.Name };
+
+            var secondEmail = new User { Id = check.Id, Email = req.Email, Name = check.Name };
+
+            await SendConfirmationEmail(firstEmail, check.ConfirmationToken);
+
+            await SendConfirmationEmail(secondEmail, check.ConfirmationTokenEmail);
+
+            return Ok(true);
+        }
+
+
+        [HttpPut("updateDoctorEmailNew"), Authorize]
+        public async Task<IActionResult> updateDoctorEmailNew([FromBody] UpdateDoctorEmailConfirmDto req)
+        {
+            var user = _dbContext.Users.Where(x => x.Id == req.Id).FirstOrDefault();
+
+            var check = _dbContext.Users.Where(x => x.Email == req.Email).FirstOrDefault();
+
+            if (check != null) return Ok(false);
+
+            if (user == null) return Ok(false);
+
+            if (user.ConfirmationToken != req.ConfirmationToken || user.ConfirmationTokenEmail != req.ConfirmationTokenEmail)
+                return Ok(false);
+
+            user.ConfirmationToken = null;
+            user.ConfirmationTokenEmail = null;
+
+            user.Email = req.Email;
+
+            await _dbContext.SaveChangesAsync();
+
+            return Ok(true);
+        }
 
 
 
