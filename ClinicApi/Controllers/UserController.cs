@@ -210,10 +210,10 @@ namespace ClinicApi.Controllers
                         Email = x.User.Email,
                         IdNumber = x.User.IdNumber,
                         CategoryName = x.User.Category.CategoryName,
-                        Role = x.User.Role
-
+                        Role = x.User.Role,
+                        IsPinned = x.User.IsPinned
                     }
-                 ).ToListAsync();
+                 ).OrderByDescending(x => x.IsPinned).ToListAsync();
 
             return Ok(doctor);
         }
@@ -237,8 +237,7 @@ namespace ClinicApi.Controllers
                         Email = x.User.Email,
                         IdNumber = x.User.IdNumber,
                         CategoryName = x.User.Category.CategoryName,
-                        Role = x.User.Role
-
+                        Role = x.User.Role,
                     }
                  ).ToListAsync();
 

@@ -16,6 +16,9 @@ namespace ClinicApi.Dto
 		public string CategoryName { get; set; }
 
 		public string Role { get; set; }
+
+		public bool IsPinned { get; set; }
+
 	}
 }
 

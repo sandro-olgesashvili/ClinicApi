@@ -40,6 +40,8 @@ namespace ClinicApi.Migrations
                     ConfirmationTokenEmail = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Role = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     EmailConfirmationTokenExpiration = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    IsPinned = table.Column<bool>(type: "bit", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     CategoryId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>

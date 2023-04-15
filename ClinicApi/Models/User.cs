@@ -37,6 +37,10 @@ namespace ClinicApi.Models
 
         public DateTime EmailConfirmationTokenExpiration { get; set; }
 
+        public bool IsPinned { get; set; } = false;
+
+        public string? Description { get; set; } = null;
+
         public int? CategoryId { get; set; } = null;
 
         public Category Category { get; set; }

@@ -237,10 +237,11 @@ namespace ClinicApi.Controllers
                         Email = x.User.Email,
                         IdNumber = x.User.IdNumber,
                         CategoryName = x.User.Category.CategoryName,
-                        Role = x.User.Role
+                        Role = x.User.Role,
+                        IsPinned = x.User.IsPinned
 
                     }
-                 ).ToListAsync();
+                 ).OrderByDescending(x => x.IsPinned).ToListAsync();
 
             return Ok(getAllUsers);
         }
@@ -259,6 +260,23 @@ namespace ClinicApi.Controllers
             return Ok(true);
         }
 
+
+        [HttpPut("changePin"), Authorize(Roles = "admin")]
+        public async Task<IActionResult> changePinned([FromBody] UpdatePinDto req)
+        {
+            var user = _dbContext.Users.Where(x => x.Id == req.Id).FirstOrDefault();
+
+            if (user == null) return Ok(false);
+
+            user.IsPinned = !user.IsPinned;
+
+            await _dbContext.SaveChangesAsync();
+
+            var data = new { Id = user.Id, isPinned = user.IsPinned };
+
+            return Ok(data);
+        }
+ 
 
         private string GenerateConfirmationToken()
         {

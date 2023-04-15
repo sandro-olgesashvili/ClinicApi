@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ClinicApi.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20230406202500_InitialCreate")]
+    [Migration("20230414203552_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -59,6 +59,9 @@ namespace ClinicApi.Migrations
                     b.Property<string>("ConfirmationTokenEmail")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -71,6 +74,9 @@ namespace ClinicApi.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsPinned")
                         .HasColumnType("bit");
 
                     b.Property<string>("Name")
