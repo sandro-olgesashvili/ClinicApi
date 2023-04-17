@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace ClinicApi.Models
 {
@@ -44,6 +45,9 @@ namespace ClinicApi.Models
         public int? CategoryId { get; set; } = null;
 
         public Category Category { get; set; }
+
+        [JsonIgnore]
+        public List<Appointment> Appointments { get; set; }
 
     }
 }
