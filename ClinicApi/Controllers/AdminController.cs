@@ -276,7 +276,60 @@ namespace ClinicApi.Controllers
 
             return Ok(data);
         }
- 
+
+
+        [HttpGet("doctorAppointments"), Authorize(Roles = "admin")]
+        public async Task<IActionResult> doctorAppointments([FromQuery] GetDoctorProfileDto req)
+        {
+            var user = _dbContext.Users.Where(x => x.Id == req.Id).FirstOrDefault();
+
+            if (user == null) return Ok(false);
+
+            var appointments = await _dbContext.Appointments.Where(x => x.UserId == user.Id).ToListAsync();
+
+            if (appointments == null) return Ok(false);
+
+            return Ok(appointments);
+        }
+
+        [HttpPost("doctorAppointments"), Authorize(Roles = "admin")]
+        public async Task<IActionResult> doctorAppointmentsPost([FromBody] AppointmentAdminDto req)
+        {
+            var user = _dbContext.Users.Where(x => x.Id == req.Id).FirstOrDefault();
+
+            if (user == null) return Ok(false);
+
+            var appointment = new Appointment {
+                StartTime = req.StartTime,
+                EndTime = req.EndTime,
+                UserId = req.Id,
+                PatientId = null
+            };
+
+            _dbContext.Appointments.Add(appointment);
+
+            await _dbContext.SaveChangesAsync();
+
+            var sendData = await _dbContext.Appointments.Where(x => x.UserId == req.Id).
+                Select(x => new { x.StartTime, x.EndTime, x.PatientId, x.Id, x.UserId }).ToListAsync();
+
+            return Ok(sendData);
+        }
+
+        [HttpDelete("doctorAppointmentDelete"), Authorize(Roles = "admin")]
+        public async Task<IActionResult> doctorAppointmentDelete([FromQuery] AppointmentDelAdminDto req)
+        {
+            var app = _dbContext.Appointments.Where(x => x.Id == req.AppointmentId).FirstOrDefault();
+
+            if (app == null) return Ok(false);
+
+            _dbContext.Appointments.Remove(app);
+
+            await _dbContext.SaveChangesAsync();
+
+            return Ok(true);
+        }
+
 
         private string GenerateConfirmationToken()
         {

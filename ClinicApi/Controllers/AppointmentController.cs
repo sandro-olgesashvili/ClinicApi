@@ -72,6 +72,78 @@ namespace ClinicApi.Controllers
             return Ok(sendData);
         }
 
+
+        [HttpDelete("deleteAppointment"), Authorize(Roles = "doctor")]
+        public async Task<IActionResult> deleteAppointment([FromQuery] GetDoctorProfileDto req)
+        {
+            var username = _userService.GetMyName();
+
+            var user = _dbContext.Users.Where(x => x.Email == username).FirstOrDefault();
+
+            if (user == null) return Ok(false);
+
+            var appointment = _dbContext.Appointments.Where(x => x.Id == req.Id && x.UserId == user.Id).FirstOrDefault();
+
+            if (appointment == null) return Ok(false);
+
+            _dbContext.Appointments.Remove(appointment);
+
+            await _dbContext.SaveChangesAsync();
+            
+            return Ok(true);
+        }
+
+
+        [HttpGet("getAppointment")]
+        public async Task<IActionResult> getAppointment(GetDoctorProfileDto req)
+        {
+            var user = _dbContext.Users.Where(x => x.Id == req.Id).FirstOrDefault();
+
+            if (user == null) return Ok(false);
+
+            var appointments = await _dbContext.Appointments.Where(x => x.UserId == user.Id).ToListAsync();
+
+            if (appointments == null) return Ok(false);
+
+            return Ok(appointments);
+        }
+
+
+        [HttpGet("userAppointment"), Authorize]
+        public async Task<IActionResult> userAppointment()
+        {
+            var username = _userService.GetMyName();
+
+            var user = _dbContext.Users.Where(x => x.Email == username).FirstOrDefault();
+
+            if (user == null) return Ok(false);
+
+            var userAppointment = await _dbContext.Appointments.Where(x => x.PatientId == user.Id).ToListAsync();
+
+            if (userAppointment == null) return Ok(false);
+
+            return Ok(userAppointment);
+        }
+
+        [HttpPut("userAppointmentRemove"), Authorize]
+        public async Task<IActionResult> userAppointmentRemove([FromBody] GetDoctorProfileDto req)
+        {
+            var username = _userService.GetMyName();
+
+            var user = _dbContext.Users.Where(x => x.Email == username).FirstOrDefault();
+
+            if (user == null) return Ok(false);
+
+            var userAppointment = _dbContext.Appointments.Where(x => x.Id == req.Id && user.Id == x.PatientId).FirstOrDefault();
+
+            if (userAppointment == null) return Ok(false);
+
+            userAppointment.PatientId = null;
+
+            await _dbContext.SaveChangesAsync();
+
+            return Ok(true);
+        }
     }
 }
 

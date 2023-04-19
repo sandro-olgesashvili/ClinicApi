@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Text.Json.Serialization;
-
-namespace ClinicApi.Models
+namespace ClinicApi.Dto
 {
-	public class Appointment
+	public class AppointmentAdminDto
 	{
         public int Id { get; set; }
 
@@ -12,11 +10,6 @@ namespace ClinicApi.Models
         public DateTime EndTime { get; set; }
 
         public int? PatientId { get; set; } = null;
-
-        public int UserId { get; set; }
-
-        [JsonIgnore]
-        public User User { get; set; }
     }
 }
 
