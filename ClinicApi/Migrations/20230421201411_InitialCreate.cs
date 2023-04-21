@@ -39,6 +39,8 @@ namespace ClinicApi.Migrations
                     ConfirmationToken = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ConfirmationTokenEmail = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Role = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    ImageName = table.Column<string>(type: "nvarchar(100)", nullable: true),
+                    PdfName = table.Column<string>(type: "nvarchar(100)", nullable: true),
                     EmailConfirmationTokenExpiration = table.Column<DateTime>(type: "datetime2", nullable: false),
                     IsPinned = table.Column<bool>(type: "bit", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: true),

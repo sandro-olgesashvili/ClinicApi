@@ -47,7 +47,7 @@ namespace ClinicApi.Controllers
 
 
         [HttpPost("register")]
-        public async Task<ActionResult> Register([FromBody] RegisterDto req)
+        public async Task<ActionResult> Register([FromForm] RegisterDto req)
         {
             var check = _dbContext.Users.Where(x => x.Email == req.Email).FirstOrDefault();
 
@@ -68,9 +68,10 @@ namespace ClinicApi.Controllers
 
             if (check != null) return Ok(false);
 
-
-            //req.ImageName = await SaveImage(req.ImageFile);
-
+            if (req.ImageFile != null)
+            {
+                req.ImageName = await SaveImage(req.ImageFile);
+            }
 
             var user = new User
             {
@@ -82,8 +83,7 @@ namespace ClinicApi.Controllers
                 IsConfirmed = false,
                 ConfirmationToken = GenerateConfirmationToken(),
                 EmailConfirmationTokenExpiration = DateTime.Now.AddMinutes(30),
-                //ImageName = req.ImageName,
-                //ImageSrc = String.Format("{0}://{1}{2}/Images/{3}", Request.Scheme, Request.Host, Request.PathBase, req.ImageName),
+                ImageName = req.ImageName,
             };
 
             _dbContext.Users.Add(user);
@@ -119,7 +119,13 @@ namespace ClinicApi.Controllers
 
             await _dbContext.SaveChangesAsync();
 
-            var res = new { token = _tokenService.GenerateToken(user), role = user.Role, name = user.Name, surname = user.Surname };
+            var res = new {
+                token = _tokenService.GenerateToken(user),
+                role = user.Role,
+                name = user.Name,
+                surname = user.Surname,
+                image = String.Format("{0}://{1}{2}/Images/{3}", Request.Scheme, Request.Host, Request.PathBase, user.ImageName)
+            };
 
             return Ok(res);
         }

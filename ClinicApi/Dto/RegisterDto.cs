@@ -20,14 +20,24 @@ namespace ClinicApi.Dto
 
         public string? Category { get; set; } = null;
 
-        //[Column(TypeName = "nvarchar(100)")]
-        //public string ImageName { get; set; }
+        [Column(TypeName = "nvarchar(100)")]
+        public string? ImageName { get; set; } = null;
 
-        //[NotMapped]
-        //public IFormFile ImageFile { get; set; }
+        [NotMapped]
+        public IFormFile? ImageFile { get; set; } = null;
 
-        //[NotMapped]
-        //public string ImageSrc { get; set; }
+        [NotMapped]
+        public string? ImageSrc { get; set; } = null;
+        
+
+        [Column(TypeName = "nvarchar(100)")]
+        public string? PdfName { get; set; } = null;
+
+        [NotMapped]
+        public IFormFile? PdfFile { get; set; } = null;
+
+        [NotMapped]
+        public string? PdfSrc { get; set; } = null;
 
     }
 }

@@ -251,6 +251,16 @@ namespace ClinicApi.Controllers
         {
             var user = _dbContext.Users.Where(x => x.Id == req.Id).FirstOrDefault();
 
+            var delApp = _dbContext.Appointments.Where(x => x.PatientId == req.Id).ToList();
+
+            if (delApp != null) {
+                foreach (var item in delApp)
+                {
+                    item.PatientId = null;
+                }
+
+            }
+
             if (user == null) return Ok(false);
 
             _dbContext.Remove(user);
@@ -329,6 +339,36 @@ namespace ClinicApi.Controllers
 
             return Ok(true);
         }
+
+
+        [HttpGet("userAppointment"), Authorize(Roles = "admin")]
+        public async Task<IActionResult> userAppointment([FromQuery] GetDoctorProfileDto req)
+        {
+            var user = _dbContext.Users.Where(x => x.Id == req.Id).FirstOrDefault();
+
+            if (user == null) return Ok(false);
+
+            var appointment = await _dbContext.Appointments.Where(x => x.PatientId == user.Id).ToListAsync();
+
+            return Ok(appointment);
+        }
+
+
+        [HttpDelete("userAppointmentDel"), Authorize(Roles = "admin")]
+        public async Task<IActionResult> userAppointmentDel([FromQuery] GetDoctorProfileDto req)
+        {
+            var appointment = _dbContext.Appointments.Where(x => x.Id == req.Id).FirstOrDefault();
+
+            if (appointment == null) return Ok(false);
+
+            appointment.PatientId = null;
+
+            await _dbContext.SaveChangesAsync();
+
+            return Ok(true);
+        }
+
+
 
 
         private string GenerateConfirmationToken()
