@@ -23,11 +23,17 @@ namespace ClinicApi.Controllers
 
         private readonly IUserService _userService;
 
-        public AdminController(DataContext dbContext, IUserService userService)
+        private readonly IWebHostEnvironment _env;
+
+
+        public AdminController(DataContext dbContext, IUserService userService, IWebHostEnvironment env)
         {
             _dbContext = dbContext;
 
             _userService = userService;
+
+
+            _env = env;
 
         }
 
@@ -44,13 +50,23 @@ namespace ClinicApi.Controllers
 
 
         [HttpPost("addUser"), Authorize(Roles = "admin")]
-        public async Task<IActionResult> PostUser([FromBody] RegisterDto req)
+        public async Task<IActionResult> PostUser([FromForm] RegisterDto req)
         {
             var userCheck = _dbContext.Users.Where(x => x.Email == req.Email).FirstOrDefault();
 
             var category = _dbContext.Categories.Where(x => x.CategoryName == req.Category).FirstOrDefault();
 
             if (userCheck != null) return Ok(false);
+
+            if (req.ImageFile != null)
+            {
+                req.ImageName = await SaveImage(req.ImageFile);
+            }
+
+            if (req.PdfFile != null)
+            {
+                req.PdfName = await SavePdf(req.PdfFile);
+            }
 
             var user = new User
             {
@@ -64,8 +80,9 @@ namespace ClinicApi.Controllers
                 CategoryId = category?.Id,
                 ConfirmationToken = null,
                 EmailConfirmationTokenExpiration = DateTime.Now,
-                //ImageName = req.ImageName,
-                //ImageSrc = String.Format("{0}://{1}{2}/Images/{3}", Request.Scheme, Request.Host, Request.PathBase, req.ImageName),
+                ImageName = req.ImageName,
+                PdfName = req.PdfName,
+                Description = req.Description
             };
 
             _dbContext.Users.Add(user);
@@ -238,7 +255,12 @@ namespace ClinicApi.Controllers
                         IdNumber = x.User.IdNumber,
                         CategoryName = x.User.Category.CategoryName,
                         Role = x.User.Role,
-                        IsPinned = x.User.IsPinned
+                        IsPinned = x.User.IsPinned,
+                        ImageSrc = String.Format("{0}://{1}{2}/Images/{3}",
+                        Request.Scheme,
+                        Request.Host,
+                        Request.PathBase,
+                        x.User.ImageName)
 
                     }
                  ).OrderByDescending(x => x.IsPinned).ToListAsync();
@@ -408,6 +430,35 @@ namespace ClinicApi.Controllers
                 await smtpClient.SendAsync(emailMessage);
                 smtpClient.Disconnect(true);
             }
+        }
+
+
+
+        [NonAction]
+        public async Task<string> SaveImage(IFormFile imageFile)
+        {
+            string imageName = new String(Path.GetFileNameWithoutExtension(imageFile.FileName).Take(10).ToArray()).Replace(' ', '-');
+            imageName = imageName + DateTime.Now.ToString("yymmssfff") + Path.GetExtension(imageFile.FileName);
+            var imagePath = Path.Combine(_env.ContentRootPath, "Images", imageName);
+            using (var fileStream = new FileStream(imagePath, FileMode.Create))
+            {
+                await imageFile.CopyToAsync(fileStream);
+            }
+            return imageName;
+        }
+
+
+        [NonAction]
+        public async Task<string> SavePdf(IFormFile pdfFile)
+        {
+            string imageName = new String(Path.GetFileNameWithoutExtension(pdfFile.FileName).Take(10).ToArray()).Replace(' ', '-');
+            imageName = imageName + DateTime.Now.ToString("yymmssfff") + Path.GetExtension(pdfFile.FileName);
+            var imagePath = Path.Combine(_env.ContentRootPath, "Pdf", imageName);
+            using (var fileStream = new FileStream(imagePath, FileMode.Create))
+            {
+                await pdfFile.CopyToAsync(fileStream);
+            }
+            return imageName;
         }
     }
 }

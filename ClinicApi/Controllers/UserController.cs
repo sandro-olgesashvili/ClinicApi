@@ -190,7 +190,13 @@ namespace ClinicApi.Controllers
             if (user.Password != req.Password) return Ok(false);
 
 
-            var res = new { token = _tokenService.GenerateToken(user), role = user.Role, name = user.Name, surname = user.Surname };
+            var res = new {
+                token = _tokenService.GenerateToken(user),
+                role = user.Role,
+                name = user.Name,
+                surname = user.Surname,
+                image = user.ImageName != null ? String.Format("{0}://{1}{2}/Images/{3}", Request.Scheme, Request.Host, Request.PathBase, user.ImageName) : null
+            };
 
             return Ok(res);
         }
@@ -217,7 +223,10 @@ namespace ClinicApi.Controllers
                         IdNumber = x.User.IdNumber,
                         CategoryName = x.User.Category.CategoryName,
                         Role = x.User.Role,
-                        IsPinned = x.User.IsPinned
+                        IsPinned = x.User.IsPinned,
+                        ImageSrc = String.Format("{0}://{1}{2}/Images/{3}", Request.Scheme, Request.Host, Request.PathBase, x.User.ImageName),
+                        pdfSrc = String.Format("{0}://{1}{2}/Pdf/{3}", Request.Scheme, Request.Host, Request.PathBase, x.User.PdfName),
+                        Description = x.User.Description
                     }
                  ).OrderByDescending(x => x.IsPinned).ToListAsync();
 
@@ -260,7 +269,7 @@ namespace ClinicApi.Controllers
         }
 
 
-        [HttpGet("getDoctorProfile")]
+        [HttpGet("getDoctorProfile"), Authorize(Roles = "admin")]
         public async Task<IActionResult> getDoctorProfile([FromQuery] GetDoctorProfileDto req)
         {
             var doctor = await _dbContext.Users.Where(x => x.Id == req.Id).GroupJoin(
@@ -278,13 +287,56 @@ namespace ClinicApi.Controllers
                         Email = x.User.Email,
                         IdNumber = x.User.IdNumber,
                         CategoryName = x.User.Category.CategoryName,
-                        Role = x.User.Role
+                        Role = x.User.Role,
+                        ImageSrc = x.User.ImageName != null ? String.Format("{0}://{1}{2}/Images/{3}", Request.Scheme, Request.Host, Request.PathBase, x.User.ImageName) : null,
+                        pdfSrc = x.User.PdfName != null ? String.Format("{0}://{1}{2}/Pdf/{3}", Request.Scheme, Request.Host, Request.PathBase, x.User.PdfName) : null
                     }
                  ).FirstOrDefaultAsync();
 
 
             return Ok(doctor);
         }
+
+
+        [HttpGet("getDoctorProfileForAppointment")]
+        public async Task<IActionResult> getDoctorProfileForAppointment([FromQuery] GetDoctorProfileDto req)
+        {
+            var doctor = await _dbContext.Users.Where(x => x.Id == req.Id && x.Role == "doctor").GroupJoin(
+                    _dbContext.Categories,
+                    u => u.Id,
+                    c => c.Id,
+                    (u, c) => new { User = u, Category = c }
+                    ).SelectMany(
+                    x => x.Category.DefaultIfEmpty(),
+                    (x, c) => new DoctorDto
+                    {
+                        Id = x.User.Id,
+                        Name = x.User.Name,
+                        Surname = x.User.Surname,
+                        Email = x.User.Email,
+                        IdNumber = x.User.IdNumber,
+                        CategoryName = x.User.Category.CategoryName,
+                        Role = x.User.Role,
+                        ImageSrc = x.User.ImageName != null ? String.Format("{0}://{1}{2}/Images/{3}", Request.Scheme, Request.Host, Request.PathBase, x.User.ImageName) : null,
+                        pdfSrc = x.User.PdfName != null ? String.Format("{0}://{1}{2}/Pdf/{3}", Request.Scheme, Request.Host, Request.PathBase, x.User.PdfName) : null,
+                        Description = x.User.Description != null ? x.User.Description : null
+                    }
+                 ).FirstOrDefaultAsync();
+
+
+            return Ok(doctor);
+        }
+
+        [HttpGet("getDocotrAppointments")]
+        public async Task<IActionResult> getDocotrAppointments([FromQuery] GetDoctorProfileDto req)
+        {
+            var appointments = _dbContext.Appointments.Where(x => x.UserId == req.Id).ToList();
+
+            if (appointments == null) return Ok(false);
+
+            return Ok(appointments);
+        }
+
 
 
         [HttpGet("getMyProfile"), Authorize]
@@ -301,15 +353,17 @@ namespace ClinicApi.Controllers
                    ).SelectMany(
                    x => x.Category.DefaultIfEmpty(),
                    (x, c) => new DoctorDto
-                   {
+                    {
                        Id = x.User.Id,
                        Name = x.User.Name,
                        Surname = x.User.Surname,
                        Email = x.User.Email,
                        IdNumber = x.User.IdNumber,
                        CategoryName = x.User.Category.CategoryName,
-                       Role = x.User.Role
-                   }
+                       Role = x.User.Role,
+                       ImageSrc = x.User.ImageName != null ? String.Format("{0}://{1}{2}/Images/{3}", Request.Scheme, Request.Host, Request.PathBase, x.User.ImageName) : null,
+                       pdfSrc = x.User.PdfName != null ? String.Format("{0}://{1}{2}/Pdf/{3}", Request.Scheme, Request.Host, Request.PathBase, x.User.PdfName) : null
+                    }
                    ).FirstOrDefaultAsync();
 
             return Ok(user);
@@ -388,6 +442,71 @@ namespace ClinicApi.Controllers
             return Ok(true);
         }
 
+
+        [HttpPost("reservation"), Authorize]
+        public async Task<IActionResult> reservation([FromBody] GetDoctorProfileDto req)
+        {
+            var username = _userService.GetMyName();
+
+            var user = _dbContext.Users.Where(x => x.Email == username).FirstOrDefault();
+
+            if (user == null) return Ok(false);
+
+            var appointment = _dbContext.Appointments.Where(x => x.Id == req.Id).FirstOrDefault();
+
+            if (appointment == null || appointment.PatientId != null) return Ok(false);
+
+            appointment.PatientId = user.Id;
+
+            await _dbContext.SaveChangesAsync();
+
+            var sendData = await _dbContext.Appointments.Where(x => x.UserId == appointment.UserId).ToListAsync();
+
+            return Ok(sendData);
+        }
+
+        [HttpGet("getMoreDetail"), Authorize(Roles = "admin, doctor")]
+        public async Task<IActionResult> getMoreDetail([FromQuery] GetDoctorProfileDto req)
+        {
+            var appointment = _dbContext.Appointments.Where(x => x.Id == req.Id).FirstOrDefault();
+
+            if (appointment == null) return Ok(false);
+
+            var user = _dbContext.Users.Where(x => x.Id == appointment.PatientId).FirstOrDefault();
+
+            if (user == null) return Ok(false);
+
+            var sendData = new
+            {
+                name = user.Name,
+                surname = user.Surname,
+                image = String.Format("{0}://{1}{2}/Images/{3}", Request.Scheme, Request.Host, Request.PathBase, user.ImageName)
+            };
+
+
+            return Ok(sendData);
+        }
+
+        [HttpGet("getMore"), Authorize]
+        public async Task<IActionResult> getMore([FromQuery] GetDoctorProfileDto req)
+        {
+            var appointment = _dbContext.Appointments.Where(x => x.Id == req.Id).FirstOrDefault();
+
+            if (appointment == null) return Ok(false);
+
+            var doctor = _dbContext.Users.Where(x => x.Id == appointment.UserId).FirstOrDefault();
+
+            if (doctor == null) return Ok(false);
+
+            var sendData = new
+            {
+                name = doctor.Name,
+                surname = doctor.Surname,
+                image = String.Format("{0}://{1}{2}/Images/{3}", Request.Scheme, Request.Host, Request.PathBase, doctor.ImageName)
+            };
+
+            return Ok(sendData);
+        }
 
 
         private string GenerateConfirmationToken()

@@ -20,6 +20,8 @@ namespace ClinicApi.Dto
 
         public string? Category { get; set; } = null;
 
+        public string? Description { get; set; } = null;
+
         [Column(TypeName = "nvarchar(100)")]
         public string? ImageName { get; set; } = null;
 

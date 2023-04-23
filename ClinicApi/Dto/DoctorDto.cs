@@ -19,7 +19,12 @@ namespace ClinicApi.Dto
 
 		public bool IsPinned { get; set; }
 
-	}
+		public string Description { get; set; }
+
+		public string? ImageSrc { get; set; } = null;
+
+		public string? pdfSrc { get; set; } = null;
+    }
 }
 
 
