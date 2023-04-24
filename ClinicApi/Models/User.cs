@@ -25,6 +25,8 @@ namespace ClinicApi.Models
 
         public string? ConfirmationTokenEmail { get; set; } = null;
 
+        public int? Views { get; set; } = null;
+
         public string Role { get; set; } = "user";
 
         [Column(TypeName = "nvarchar(100)")]

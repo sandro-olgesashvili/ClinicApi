@@ -456,6 +456,10 @@ namespace ClinicApi.Controllers
 
             if (appointment == null || appointment.PatientId != null) return Ok(false);
 
+            var doctor = _dbContext.Users.Where(x => x.Id == appointment.UserId).FirstOrDefault();
+
+            if (doctor.Id == user.Id) return Ok(false);
+
             appointment.PatientId = user.Id;
 
             await _dbContext.SaveChangesAsync();

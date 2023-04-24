@@ -10,6 +10,7 @@ using ClinicApi.Models;
 using MailKit.Net.Smtp;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Hosting;
 using MimeKit;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -273,6 +274,14 @@ namespace ClinicApi.Controllers
         {
             var user = _dbContext.Users.Where(x => x.Id == req.Id).FirstOrDefault();
 
+            if (user.ImageName != null) {
+                DeleteImage(user.ImageName);
+            }
+
+            if (user.PdfName != null) {
+                DeletePdf(user.PdfName);
+            }
+
             var delApp = _dbContext.Appointments.Where(x => x.PatientId == req.Id).ToList();
 
             if (delApp != null) {
@@ -405,6 +414,22 @@ namespace ClinicApi.Controllers
         }
 
 
+
+        [NonAction]
+        public void DeleteImage(string imageName)
+        {
+            var imagePath = Path.Combine(_env.ContentRootPath, "Images", imageName);
+            if (System.IO.File.Exists(imagePath))
+                System.IO.File.Delete(imagePath);
+        }
+
+        [NonAction]
+        public void DeletePdf(string pdfName)
+        {
+            var pdfPath = Path.Combine(_env.ContentRootPath, "Pdf", pdfName);
+            if (System.IO.File.Exists(pdfPath))
+                System.IO.File.Delete(pdfPath);
+        }
 
         private async Task SendConfirmationEmail(UpdateDoctorEmailDto user, string token)
         {
