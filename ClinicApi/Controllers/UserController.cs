@@ -226,7 +226,8 @@ namespace ClinicApi.Controllers
                         IsPinned = x.User.IsPinned,
                         ImageSrc = String.Format("{0}://{1}{2}/Images/{3}", Request.Scheme, Request.Host, Request.PathBase, x.User.ImageName),
                         pdfSrc = String.Format("{0}://{1}{2}/Pdf/{3}", Request.Scheme, Request.Host, Request.PathBase, x.User.PdfName),
-                        Description = x.User.Description
+                        Description = x.User.Description,
+                        Views = x.User.Views != null ? x.User.Views : null
                     }
                  ).OrderByDescending(x => x.IsPinned).ToListAsync();
 
@@ -319,7 +320,8 @@ namespace ClinicApi.Controllers
                         Role = x.User.Role,
                         ImageSrc = x.User.ImageName != null ? String.Format("{0}://{1}{2}/Images/{3}", Request.Scheme, Request.Host, Request.PathBase, x.User.ImageName) : null,
                         pdfSrc = x.User.PdfName != null ? String.Format("{0}://{1}{2}/Pdf/{3}", Request.Scheme, Request.Host, Request.PathBase, x.User.PdfName) : null,
-                        Description = x.User.Description != null ? x.User.Description : null
+                        Description = x.User.Description != null ? x.User.Description : null,
+                        Views = x.User.Views != null ? x.User.Views : null
                     }
                  ).FirstOrDefaultAsync();
 
@@ -444,7 +446,7 @@ namespace ClinicApi.Controllers
 
 
         [HttpPost("reservation"), Authorize]
-        public async Task<IActionResult> reservation([FromBody] GetDoctorProfileDto req)
+        public async Task<IActionResult> reservation([FromBody] ReservationDto req)
         {
             var username = _userService.GetMyName();
 
@@ -461,6 +463,8 @@ namespace ClinicApi.Controllers
             if (doctor.Id == user.Id) return Ok(false);
 
             appointment.PatientId = user.Id;
+
+            appointment.Description = req.Description;
 
             await _dbContext.SaveChangesAsync();
 
@@ -484,7 +488,8 @@ namespace ClinicApi.Controllers
             {
                 name = user.Name,
                 surname = user.Surname,
-                image = String.Format("{0}://{1}{2}/Images/{3}", Request.Scheme, Request.Host, Request.PathBase, user.ImageName)
+                image = String.Format("{0}://{1}{2}/Images/{3}", Request.Scheme, Request.Host, Request.PathBase, user.ImageName),
+                description = appointment.Description
             };
 
 
@@ -506,11 +511,29 @@ namespace ClinicApi.Controllers
             {
                 name = doctor.Name,
                 surname = doctor.Surname,
-                image = String.Format("{0}://{1}{2}/Images/{3}", Request.Scheme, Request.Host, Request.PathBase, doctor.ImageName)
+                image = String.Format("{0}://{1}{2}/Images/{3}", Request.Scheme, Request.Host, Request.PathBase, doctor.ImageName),
             };
 
             return Ok(sendData);
         }
+
+
+        [HttpPost("views")]
+        public async Task<IActionResult> views([FromBody] GetDoctorProfileDto req)
+        {
+            var user = _dbContext.Users.Where(x => x.Id == req.Id).FirstOrDefault();
+
+            if (user == null) return Ok(false);
+
+            user.Views += 1;
+
+            await _dbContext.SaveChangesAsync();
+
+            return Ok(true);
+        }
+
+        
+        
 
 
         private string GenerateConfirmationToken()

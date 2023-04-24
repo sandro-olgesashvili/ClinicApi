@@ -83,7 +83,9 @@ namespace ClinicApi.Controllers
                 EmailConfirmationTokenExpiration = DateTime.Now,
                 ImageName = req.ImageName,
                 PdfName = req.PdfName,
-                Description = req.Description
+                Description = req.Description,
+                Views = req.Role == "doctor" ? 0 : null
+               
             };
 
             _dbContext.Users.Add(user);

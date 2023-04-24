@@ -21,6 +21,8 @@ namespace ClinicApi.Dto
 
 		public string Description { get; set; }
 
+		public int? Views { get; set; } = null;
+
 		public string? ImageSrc { get; set; } = null;
 
 		public string? pdfSrc { get; set; } = null;
