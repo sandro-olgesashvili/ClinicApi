@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ClinicApi.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20230424163044_InitialCreate")]
+    [Migration("20230425201420_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -129,6 +129,12 @@ namespace ClinicApi.Migrations
 
                     b.Property<string>("Surname")
                         .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("TwoFactor")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("TwoFactorStr")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int?>("Views")

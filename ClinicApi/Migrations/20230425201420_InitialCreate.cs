@@ -40,6 +40,8 @@ namespace ClinicApi.Migrations
                     ConfirmationTokenEmail = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Views = table.Column<int>(type: "int", nullable: true),
                     Role = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    TwoFactor = table.Column<bool>(type: "bit", nullable: false),
+                    TwoFactorStr = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ImageName = table.Column<string>(type: "nvarchar(100)", nullable: true),
                     PdfName = table.Column<string>(type: "nvarchar(100)", nullable: true),
                     EmailConfirmationTokenExpiration = table.Column<DateTime>(type: "datetime2", nullable: false),

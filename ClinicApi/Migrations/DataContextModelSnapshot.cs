@@ -128,6 +128,12 @@ namespace ClinicApi.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("TwoFactor")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("TwoFactorStr")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int?>("Views")
                         .HasColumnType("int");
 

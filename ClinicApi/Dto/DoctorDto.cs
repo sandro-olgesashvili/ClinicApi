@@ -26,7 +26,10 @@ namespace ClinicApi.Dto
 		public string? ImageSrc { get; set; } = null;
 
 		public string? pdfSrc { get; set; } = null;
-    }
+
+		public bool? TwoFactor { get; set; } = false;
+	}
+
 }
 
 

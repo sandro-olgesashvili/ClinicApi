@@ -29,6 +29,10 @@ namespace ClinicApi.Models
 
         public string Role { get; set; } = "user";
 
+        public bool TwoFactor { get; set; } = false;
+
+        public string? TwoFactorStr { get; set; } = null;
+
         [Column(TypeName = "nvarchar(100)")]
         public string? ImageName { get; set; } = null;
 

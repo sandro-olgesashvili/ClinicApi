@@ -115,7 +115,7 @@ namespace ClinicApi.Controllers
             if (result >= 0) return Ok("ბმულის მოქედების ვადა ამოიწურა");
 
             user.IsConfirmed = true;
-            user.ConfirmationToken = string.Empty;
+            user.ConfirmationToken = null;
 
             await _dbContext.SaveChangesAsync();
 
@@ -190,15 +190,30 @@ namespace ClinicApi.Controllers
             if (user.Password != req.Password) return Ok(false);
 
 
-            var res = new {
-                token = _tokenService.GenerateToken(user),
-                role = user.Role,
-                name = user.Name,
-                surname = user.Surname,
-                image = user.ImageName != null ? String.Format("{0}://{1}{2}/Images/{3}", Request.Scheme, Request.Host, Request.PathBase, user.ImageName) : null
-            };
+            if (user.TwoFactor == false)
+            {
+                var res = new
+                {
+                    token = _tokenService.GenerateToken(user),
+                    role = user.Role,
+                    name = user.Name,
+                    surname = user.Surname,
+                    image = user.ImageName != null ? String.Format("{0}://{1}{2}/Images/{3}", Request.Scheme, Request.Host, Request.PathBase, user.ImageName) : null
+                };
 
-            return Ok(res);
+                return Ok(res);
+
+            }
+            else {
+
+                user.TwoFactorStr = GenerateConfirmationToken();
+
+                var twoFactorStrToken = _dbContext.Users.Where(x => x.Email == user.Email).FirstOrDefault().TwoFactorStr;
+
+                await SendConfirmationEmail(user, twoFactorStrToken);
+
+                return Ok(true);
+            }
         }
 
 
@@ -364,12 +379,31 @@ namespace ClinicApi.Controllers
                        CategoryName = x.User.Category.CategoryName,
                        Role = x.User.Role,
                        ImageSrc = x.User.ImageName != null ? String.Format("{0}://{1}{2}/Images/{3}", Request.Scheme, Request.Host, Request.PathBase, x.User.ImageName) : null,
-                       pdfSrc = x.User.PdfName != null ? String.Format("{0}://{1}{2}/Pdf/{3}", Request.Scheme, Request.Host, Request.PathBase, x.User.PdfName) : null
+                       pdfSrc = x.User.PdfName != null ? String.Format("{0}://{1}{2}/Pdf/{3}", Request.Scheme, Request.Host, Request.PathBase, x.User.PdfName) : null,
+                       TwoFactor = x.User.TwoFactor
                     }
                    ).FirstOrDefaultAsync();
 
             return Ok(user);
         }
+
+
+        [HttpPut("changeTwoFactor"), Authorize]
+        public async Task<IActionResult> changeTwoFactor([FromBody] TwoFactorDto req)
+        {
+            var username = _userService.GetMyName();
+
+            var user = _dbContext.Users.Where(x => x.Email == username).FirstOrDefault();
+
+            if (user == null) return Ok(false);
+
+            user.TwoFactor = req.TwoFactor;
+
+            await _dbContext.SaveChangesAsync();
+
+            return Ok(true);
+        }
+
 
 
         [HttpPut("passwordChange"), Authorize]
