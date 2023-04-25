@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using ClinicApi.Data;
 using ClinicApi.Dto;
@@ -206,14 +207,54 @@ namespace ClinicApi.Controllers
             }
             else {
 
-                user.TwoFactorStr = GenerateConfirmationToken();
+                user.TwoFactorStr = TwoFactorGenerateToken();
 
                 var twoFactorStrToken = _dbContext.Users.Where(x => x.Email == user.Email).FirstOrDefault().TwoFactorStr;
 
+                user.EmailConfirmationTokenExpiration = DateTime.Now.AddMinutes(5);
+
                 await SendConfirmationEmail(user, twoFactorStrToken);
+
+                await _dbContext.SaveChangesAsync();
 
                 return Ok(true);
             }
+        }
+
+
+        [HttpPost("twoFactorLogin")]
+        public async Task<IActionResult> twoFactorLogin([FromBody] LoginTwoFactorDto req)
+        {
+            var user = _dbContext.Users.Where(x => x.Email == req.Email).FirstOrDefault();
+
+            if (user == null) return Ok(false);
+
+            var nowDate = DateTime.Now;
+
+            int result = DateTime.Compare(nowDate, user.EmailConfirmationTokenExpiration);
+
+            if (user.Password != req.Password) return Ok(false);
+
+            if (result >= 0) return Ok("ბმულის მოქედების ვადა ამოიწურა");
+
+            if (user.TwoFactorStr != req.TwoFactorStr) return Ok(false);
+
+
+            var res = new
+            {
+                token = _tokenService.GenerateToken(user),
+                role = user.Role,
+                name = user.Name,
+                surname = user.Surname,
+                image = user.ImageName != null ? String.Format("{0}://{1}{2}/Images/{3}", Request.Scheme, Request.Host, Request.PathBase, user.ImageName) : null
+            };
+
+            user.TwoFactorStr = null;
+
+            await _dbContext.SaveChangesAsync();
+
+            return Ok(res);
+
         }
 
 
@@ -581,6 +622,20 @@ namespace ClinicApi.Controllers
             return Convert.ToBase64String(tokenBytes);
         }
 
+
+        private static string TwoFactorGenerateToken()
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            var random = new Random();
+            var tokenBuilder = new StringBuilder(4);
+
+            for (int i = 0; i < 4; i++)
+            {
+                tokenBuilder.Append(chars[random.Next(chars.Length)]);
+            }
+
+            return tokenBuilder.ToString();
+        }
 
 
         private async Task SendConfirmationEmail(User user, string token)
