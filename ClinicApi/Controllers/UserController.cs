@@ -671,7 +671,7 @@ namespace ClinicApi.Controllers
             using (var smtpClient = new SmtpClient())
             {
                 smtpClient.Connect("smtp.gmail.com", 587, useSsl: false);
-                smtpClient.Authenticate("sandrikaa97@gmail.com", "etfcagahytotpbxa\n");
+                smtpClient.Authenticate("sandrikaa97@gmail.com", "");
                 await smtpClient.SendAsync(emailMessage);
                 smtpClient.Disconnect(true);
             }
