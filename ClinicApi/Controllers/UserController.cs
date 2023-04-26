@@ -154,6 +154,19 @@ namespace ClinicApi.Controllers
 
         }
 
+        [HttpPut("passwrodRestore")]
+        public async Task<IActionResult> passwrodRestore([FromBody] PasswrodRestoreDto req)
+        {
+            var user = _dbContext.Users.Where(x => x.Email == req.Email).FirstOrDefault();
+
+            if (user == null) return Ok(false);
+
+            if (user.ConfirmationToken == req.ConfirmationToken) return Ok(true);
+
+            return Ok(false);
+        }
+
+
         [HttpPut("update")]
         public async Task<IActionResult> Update([FromBody] UpdateDto req)
         {
